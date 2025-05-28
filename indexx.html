@@ -174,7 +174,7 @@
         const requestData = { inputs: [formData] };
 
  
-        fetch('http://localhost:8000/api/hfp_prediction', {  
+        fetch('https://test-flask-5fvf.onrender.com/predict', {  
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestData)
