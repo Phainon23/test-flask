@@ -12,41 +12,48 @@ x = pd.read_csv('STI_data.csv')
 # Print columns so we can debug and see the target column
 print("Columns in dataset:", x.columns.tolist())
 
-# Drop the target column to get features – update 'Target' to your actual target column name
+# Drop the target column to get features – update 'STI_Diagnose' to your actual target column name
 try:
     feature_columns = x.drop(columns=['STI_Diagnose']).columns.tolist()
 except KeyError:
-    raise KeyError("Update 'Target' to the actual name of your label column in asthma_data.csv")
+    raise KeyError("Update 'STI_Diagnose' to the actual name of your label column in STI_data.csv")
 
 print("Feature columns used for prediction:", feature_columns)
 
-
+# Initialize Flask app
 api = Flask(__name__)
-CORS(api)
+CORS(api)  # Enables CORS globally
 
-@api.route('/api/hfp_prediction', methods=['POST'])
+# Endpoint for Brain Stroke Prediction (HFP Prediction)
+@api.route('/predict', methods=['POST', 'OPTIONS'])
 def predict_brain_stroke():
-    try:
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return '', 200
 
+    try:
+        # Parse the input data from the request
         data = request.json['inputs']
         input_df = pd.DataFrame(data)
 
-  
+        # Ensure the features match the ones used in training
         input_df = input_df[feature_columns]
 
-      
-        prediction = model.predict_proba(input_df)
+        # Predict Brain Stroke Risk (HFP)
+        probabilities = model.predict_proba(input_df)
         class_labels = model.classes_
 
- 
+        # Prepare the response with prediction probabilities
         response = []
-        for prob in prediction:
+        for prob in probabilities:
             prob_dict = {str(k): round(float(v) * 100, 2) for k, v in zip(class_labels, prob)}
             response.append(prob_dict)
 
         return jsonify({"Prediction": response})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 if __name__ == '__main__':
-    api.run(port=8000)
+    api.run(debug=True, host='0.0.0.0', port=5000)
