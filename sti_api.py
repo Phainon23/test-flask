@@ -32,9 +32,18 @@ def predict_brain_stroke():
         return '', 200
 
     try:
-        # Parse the input data from the request
-        data = request.json['inputs']
+        # Ensure data is provided
+        data = request.json.get('inputs')
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
+        
+        # Convert input data to DataFrame
         input_df = pd.DataFrame(data)
+
+        # Check if the input data has all the necessary feature columns
+        missing_columns = [col for col in feature_columns if col not in input_df.columns]
+        if missing_columns:
+            return jsonify({"error": f"Missing columns: {', '.join(missing_columns)}"}), 400
 
         # Ensure the features match the ones used in training
         input_df = input_df[feature_columns]
@@ -52,7 +61,7 @@ def predict_brain_stroke():
         return jsonify({"Prediction": response})
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
